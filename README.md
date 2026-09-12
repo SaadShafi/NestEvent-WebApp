@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NEST — Event Web App
 
-## Getting Started
+Next.js 16 (App Router) implementation of the NEST event platform for two roles:
 
-First, run the development server:
+- **Guest**: discover events, search & filter, event details with map, cart → checkout → tickets with scannable QR (share / download), social feed, chat, profile, settings.
+- **Organizer**: everything a guest has, plus My Events, view event (analytics, tracking links, promo codes, complimentary tickets), create organization (team & roles), and the full create-event wizard (media & AI flyer, attendance model, visibility & password, ticket types & restrictions, guest list, review, boost).
+
+Design source: Figma "Nest Event App" — Guest Flow Web App and Organizer Flow Web App canvases.
+
+## Run
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# open http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Sign in with any email / password (demo auth). Pick a role on the first screen; you can switch role later from the avatar menu.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How things work
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Feature | Implementation |
+| --- | --- |
+| State / persistence | `lib/store.ts` (zustand, persisted to `localStorage`) |
+| Uploads | Drag & drop / click → `POST /api/upload` → files saved to `public/uploads/` |
+| Location suggestions | `components/ui/location-input.tsx` → OpenStreetMap Nominatim search, plus "use my location" (browser geolocation + reverse geocode) |
+| Maps | `components/ui/map-view.tsx` → Leaflet + OpenStreetMap tiles, orange NEST pin |
+| QR tickets | `components/ui/qr-code.tsx` → `qrcode` renders the ticket code; "Download QR" builds a PNG ticket, "Share Via" uses the Web Share API (file share where supported, link fallback, clipboard fallback) |
+| Chat | `app/(app)/messages` — conversations, attachments, emoji, simulated replies |
 
-## Learn More
+## Structure
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/
+  auth/            role select, sign in/up, forgot / OTP / reset
+  onboarding/      profile setup, interests
+  (app)/           pages inside the sidebar shell (dashboard, search, social, tickets, messages, account, settings, organizer/events)
+  (flow)/          full-page "← Back" screens (event details, checkout, ticket QR, create post, wizards…)
+  api/upload/      local file upload route
+components/
+  shell/           AppShell (sidebar + topbar), FlowPage, AuthSplit, SuccessScreen, CreateMenu
+  ui/              buttons, form controls, uploader, location input, map, QR, event card, icons
+lib/               types, mock data, store, geo helpers, utils
+public/            brand logo, Figma-exported images & icons
+```

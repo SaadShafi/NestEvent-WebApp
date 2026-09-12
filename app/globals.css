@@ -1,26 +1,308 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #0d0d0d;
+  --bg-elev: #101010;
+  --surface: #1d1d1d;
+  --surface-2: #171717;
+  --surface-3: #262626;
+  --border: #2a2a2a;
+  --border-soft: #353536;
+  --text: #fcfcfc;
+  --text-muted: #b9b9b9;
+  --text-dim: #8d8d8d;
+  --text-dimmer: #797979;
+  --accent: #ff6a00;
+  --accent-2: #ff8a00;
+  --accent-soft: rgba(255, 106, 0, 0.12);
+  --danger: #ff5557;
+  --success: #3ddc84;
+  --radius-pill: 100px;
+  --radius-card: 28px;
+  --radius-input: 100px;
+  --sidebar-w: 292px;
+  --topbar-h: 80px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-bg-elev: var(--bg-elev);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-dim: var(--text-dim);
+  --color-dimmer: var(--text-dimmer);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --font-sans: var(--font-poppins), system-ui, sans-serif;
+  --font-display: var(--font-urbanist), var(--font-poppins), system-ui, sans-serif;
+  --radius-pill: var(--radius-pill);
+  --radius-card: var(--radius-card);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-poppins), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-urbanist), var(--font-poppins), system-ui, sans-serif;
+}
+
+/* Orange pill gradient used for primary CTA + active tabs */
+.bg-accent-gradient {
+  background: linear-gradient(180deg, #ff8a1f 0%, #ff6a00 55%, #f25c00 100%);
+}
+
+.text-gradient-accent {
+  background: linear-gradient(90deg, #ff8a1f, #ff6a00);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Glow behind auth cards */
+.glow-card {
+  background: radial-gradient(
+      120% 90% at 50% 0%,
+      rgba(255, 106, 0, 0.22) 0%,
+      rgba(255, 106, 0, 0.06) 45%,
+      rgba(13, 13, 13, 0) 80%
+    ),
+    #111111;
+}
+
+.glow-orange {
+  box-shadow: 0 0 120px 20px rgba(255, 106, 0, 0.22);
+}
+
+/* Thin scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2e2e2e transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #2e2e2e;
+  border-radius: 8px;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Inputs */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-dim);
+}
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid rgba(255, 106, 0, 0.55);
+  outline-offset: 1px;
+}
+/* Native date/time pickers: hide the browser icon (we render our own on the
+   right) but stretch the invisible indicator over the whole field so a click
+   anywhere still opens the picker. */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  position: relative;
+  color-scheme: dark;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+input[type="date"]::-webkit-inner-spin-button,
+input[type="time"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button,
+input[type="time"]::-webkit-clear-button {
+  display: none;
+  -webkit-appearance: none;
+}
+input[type="date"]:invalid::-webkit-datetime-edit,
+input[type="time"]:invalid::-webkit-datetime-edit {
+  color: var(--text-dim);
+}
+
+/* Range sliders (dual) */
+.range-track {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: #3a3a3a;
+}
+.range-fill {
+  position: absolute;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+.range-input {
+  position: absolute;
+  inset: -10px 0;
+  width: 100%;
+  height: 26px;
+  margin: 0;
+  background: transparent;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid #0d0d0d;
+  cursor: pointer;
+}
+.range-input::-moz-range-thumb {
+  pointer-events: auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid #0d0d0d;
+  cursor: pointer;
+}
+
+/* Leaflet dark theme tweaks */
+.leaflet-container {
+  background: #111;
+  font-family: inherit;
+}
+.leaflet-control-attribution {
+  background: rgba(0, 0, 0, 0.55) !important;
+  color: #8d8d8d !important;
+  font-size: 10px;
+}
+.leaflet-control-attribution a {
+  color: #b9b9b9 !important;
+}
+.leaflet-bar a {
+  background: #1d1d1d !important;
+  color: #fcfcfc !important;
+  border-color: #2a2a2a !important;
+}
+
+.nest-marker {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 18px rgba(255, 106, 0, 0.45);
+  border: 3px solid #0d0d0d;
+}
+
+/* Ticket notch */
+.ticket-notch::before,
+.ticket-notch::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg);
+  transform: translateY(-50%);
+}
+.ticket-notch::before {
+  left: -14px;
+}
+.ticket-notch::after {
+  right: -14px;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fade-in 0.18s ease-out;
+}
+
+/* Dashed upload zone */
+.dashed-accent {
+  background-image: repeating-linear-gradient(
+      0deg,
+      var(--accent),
+      var(--accent) 6px,
+      transparent 6px,
+      transparent 12px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      var(--accent),
+      var(--accent) 6px,
+      transparent 6px,
+      transparent 12px
+    ),
+    repeating-linear-gradient(
+      180deg,
+      var(--accent),
+      var(--accent) 6px,
+      transparent 6px,
+      transparent 12px
+    ),
+    repeating-linear-gradient(
+      270deg,
+      var(--accent),
+      var(--accent) 6px,
+      transparent 6px,
+      transparent 12px
+    );
+  background-size:
+    1px 100%,
+    100% 1px,
+    1px 100%,
+    100% 1px;
+  background-position:
+    0 0,
+    0 0,
+    100% 0,
+    0 100%;
+  background-repeat: no-repeat;
 }
