@@ -90,7 +90,7 @@ export function CommentsClient({ id }: { id: string }) {
   };
 
   return (
-    <FlowPage title={post ? `Comment ${compact(post.comments)}` : "Comments"} backHref="/social" width="md" className="pb-32">
+    <FlowPage title={post ? `Comment ${compact(post.comments)}` : "Comments"} width="md" className="pb-32">
       {!post ? (
         <EmptyState title="Post not found" sub="This post may have been removed." />
       ) : list.length === 0 ? (

@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { useNest } from "@/lib/store";
 import type { DeliveryAddress, LocationValue } from "@/lib/types";
 import { FlowPage } from "@/components/shell/flow-layout";
@@ -11,22 +11,36 @@ import { LocationInput } from "@/components/ui/location-input";
 import { useToast } from "@/components/ui/toast";
 
 export default function AddressPage() {
+  return (
+    <Suspense fallback={<div className="grid min-h-screen place-items-center text-dim">Loading…</div>}>
+      <AddressForm />
+    </Suspense>
+  );
+}
+
+function AddressForm() {
   const router = useRouter();
   const toast = useToast();
+  const params = useSearchParams();
   const user = useNest((s) => s.user);
   const cart = useNest((s) => s.cart);
+  const addresses = useNest((s) => s.addresses);
   const addAddress = useNest((s) => s.addAddress);
-  const placeOrder = useNest((s) => s.placeOrder);
+  const updateAddress = useNest((s) => s.updateAddress);
 
-  const [fullName, setFullName] = useState(user ? `${user.firstName} ${user.lastName}`.trim() : "");
-  const [dial, setDial] = useState("+1");
-  const [phone, setPhone] = useState("");
-  const [country, setCountry] = useState("");
-  const [city, setCity] = useState("");
-  const [location, setLocation] = useState<LocationValue | null>(null);
-  const [zipcode, setZipcode] = useState("");
-  const [label, setLabel] = useState<"Home" | "Office">("Home");
-  const [isDefault, setIsDefault] = useState(true);
+  // ?edit=<index> edits a saved address (pencil on the Checkout address card).
+  const editIndex = params.has("edit") ? Number(params.get("edit")) : -1;
+  const existing = editIndex >= 0 ? addresses[editIndex] : undefined;
+
+  const [fullName, setFullName] = useState(existing?.fullName ?? (user ? `${user.firstName} ${user.lastName}`.trim() : ""));
+  const [dial, setDial] = useState(existing?.dialCode ?? "+1");
+  const [phone, setPhone] = useState(existing?.phone ?? "");
+  const [country, setCountry] = useState(existing?.country ?? "");
+  const [city, setCity] = useState(existing?.city ?? "");
+  const [location, setLocation] = useState<LocationValue | null>(existing?.location ?? null);
+  const [zipcode, setZipcode] = useState(existing?.zipcode ?? "");
+  const [label, setLabel] = useState<"Home" | "Office">(existing?.label ?? "Home");
+  const [isDefault, setIsDefault] = useState(existing?.isDefault ?? true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
@@ -63,24 +77,15 @@ export default function AddressPage() {
       isDefault,
     };
     setBusy(true);
-    addAddress(address);
-    if (!cart || !cart.lines.length) {
-      toast("Address saved", "success");
-      router.push("/tickets");
-      return;
-    }
-    const order = placeOrder(address);
-    if (!order) {
-      setBusy(false);
-      toast("Could not place the order", "error");
-      return;
-    }
-    toast("Order placed", "success");
-    router.push(`/checkout/success?order=${order.id}`);
+    if (existing) updateAddress(editIndex, address);
+    else addAddress(address);
+    toast(existing ? "Address updated" : "Address saved", "success");
+    // Back to the Checkout screen to review the order and pay.
+    router.push(cart && cart.lines.length ? "/checkout" : "/tickets");
   };
 
   return (
-    <FlowPage title="Add Delivery Address" backHref={cart ? `/events/${cart.eventId}/checkout` : "/dashboard"} width="sm">
+    <FlowPage title={existing ? "Edit Delivery Address" : "Add Delivery Address"} backHref={cart ? "/checkout" : "/dashboard"} width="sm" stacked>
       <div className="flex flex-col gap-5">
         <Field label="Full Name" error={errors.fullName}>
           <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Enter" invalid={!!errors.fullName} />
@@ -88,7 +93,7 @@ export default function AddressPage() {
         <Field label="Number" error={errors.phone}>
           <PhoneInput value={phone} onChange={setPhone} dial={dial} onDialChange={setDial} />
         </Field>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Country" error={errors.country}>
             <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Country" invalid={!!errors.country} />
           </Field>
@@ -103,7 +108,7 @@ export default function AddressPage() {
           <Input value={zipcode} onChange={(e) => setZipcode(e.target.value)} placeholder="Enter" inputMode="numeric" />
         </Field>
         <Field label="Select A Label For Effective Delivery">
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             {(["Home", "Office"] as const).map((l) => (
               <Chip key={l} size="lg" active={label === l} removable onClick={() => setLabel(l)}>
                 {l}

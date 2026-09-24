@@ -18,7 +18,11 @@ export async function POST(request: Request) {
   }
 
   const dir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(dir, { recursive: true });
+  try {
+    await mkdir(dir, { recursive: true });
+  } catch {
+    return NextResponse.json({ error: "Upload storage is not available" }, { status: 500 });
+  }
 
   const saved: { url: string; name: string; type: string; size: number }[] = [];
   for (const file of files) {
@@ -30,7 +34,11 @@ export async function POST(request: Request) {
     }
     const name = safeName(file.name || "upload");
     const bytes = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(dir, name), bytes);
+    try {
+      await writeFile(path.join(dir, name), bytes);
+    } catch {
+      return NextResponse.json({ error: `Could not save ${file.name}` }, { status: 500 });
+    }
     saved.push({ url: `/uploads/${name}`, name: file.name, type: file.type, size: file.size });
   }
 

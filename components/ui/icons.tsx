@@ -338,6 +338,18 @@ export const IconMail = ({ size, ...p }: P) => (
     <path d="M3 5h18a1 1 0 0 1 1 1v.6l-10 6.2L2 6.6V6a1 1 0 0 1 1-1Zm-1 4 10 6.2L22 9v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1Z" />
   </svg>
 );
+export const IconWallet = ({ size, ...p }: P) => (
+  <svg {...base(size)} {...p}>
+    <path d="M19 7V5.5A1.5 1.5 0 0 0 17.5 4H5a2 2 0 0 0 0 4h14a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6" />
+    <path d="M16 14h.01" strokeWidth={2.4} />
+  </svg>
+);
+export const IconCard = ({ size, ...p }: P) => (
+  <svg {...base(size)} {...p}>
+    <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+    <path d="M2.5 10h19M6.5 15h4" />
+  </svg>
+);
 export const IconPhone = ({ size, ...p }: P) => (
   <svg {...base(size)} {...p} fill="currentColor" stroke="none">
     <path d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.1.37 2.3.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1Z" />

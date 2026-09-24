@@ -35,6 +35,7 @@ export default function LeafletMap({
   label,
   onPick,
   interactive,
+  zoomControl = interactive,
 }: {
   lat: number;
   lng: number;
@@ -42,6 +43,7 @@ export default function LeafletMap({
   label?: string;
   onPick?: (p: { lat: number; lng: number }) => void;
   interactive: boolean;
+  zoomControl?: boolean;
 }) {
   return (
     <MapContainer
@@ -49,7 +51,7 @@ export default function LeafletMap({
       zoom={zoom}
       scrollWheelZoom={interactive}
       dragging={interactive}
-      zoomControl={interactive}
+      zoomControl={zoomControl}
       doubleClickZoom={interactive}
       style={{ height: "100%", width: "100%" }}
       attributionControl

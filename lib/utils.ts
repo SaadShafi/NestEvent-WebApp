@@ -47,19 +47,60 @@ export async function copyText(text: string) {
   }
 }
 
-/** Upload files to the local upload route; returns public URLs. */
-export async function uploadFiles(files: File[] | FileList): Promise<{ url: string; name: string; type: string }[]> {
-  const list = Array.from(files);
+type Uploaded = { url: string; name: string; type: string };
+
+const MAX_IMAGE_EDGE = 1600;
+
+/** Downscale / re-encode large photos in the browser so uploads stay small (phone photos are often 5–15 MB). */
+async function shrinkImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || /gif|svg/.test(file.type) || file.size < 400_000) return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, MAX_IMAGE_EDGE / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch {
+    return file; // e.g. HEIC the browser can't decode — send the original
+  }
+}
+
+/** Keep a file in the browser when the server can't take it: images as data URLs (survive reloads), videos as blob URLs. */
+function localFile(file: File): Promise<Uploaded> {
+  if (!file.type.startsWith("image/")) {
+    return Promise.resolve({ url: URL.createObjectURL(file), name: file.name, type: file.type || "video/mp4" });
+  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve({ url: String(reader.result), name: file.name, type: file.type });
+    reader.onerror = () => reject(new Error(`Could not read ${file.name}`));
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Upload files to the local upload route; returns their URLs. Photos are compressed first, and if
+ * the server rejects the upload (size limit, read-only disk, offline…) the files are kept in the
+ * browser instead so the user can carry on (e.g. Create Post).
+ */
+export async function uploadFiles(files: File[] | FileList): Promise<Uploaded[]> {
+  const list = await Promise.all(Array.from(files).map(shrinkImage));
   if (!list.length) return [];
   const fd = new FormData();
   list.forEach((f) => fd.append("files", f));
-  const res = await fetch("/api/upload", { method: "POST", body: fd });
-  if (!res.ok) {
-    const msg = await res.text().catch(() => "");
-    throw new Error(msg || "Upload failed");
+  try {
+    const res = await fetch("/api/upload", { method: "POST", body: fd });
+    if (!res.ok) throw new Error(`Upload failed (${res.status})`);
+    const data = (await res.json()) as { files: Uploaded[] };
+    return data.files;
+  } catch {
+    return Promise.all(list.map(localFile));
   }
-  const data = (await res.json()) as { files: { url: string; name: string; type: string }[] };
-  return data.files;
 }
 
 export function strongPassword(p: string) {

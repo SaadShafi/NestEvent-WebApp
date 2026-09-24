@@ -4,14 +4,14 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useNest } from "@/lib/store";
-import type { EventItem, SocialLinks } from "@/lib/types";
+import type { EventItem, Post, SocialLinks } from "@/lib/types";
 import { cn, copyText } from "@/lib/utils";
 import { FlowPage } from "@/components/shell/flow-layout";
 import { Button } from "@/components/ui/button";
 import { EventCard } from "@/components/ui/event-card";
 import { PillTabs } from "@/components/ui/form";
 import { IconInstagram, IconPin, IconPlay, IconShare, IconSnapchat, IconVerified, IconX, IconYoutube } from "@/components/ui/icons";
-import { Avatar, EmptyState, Modal, Stars } from "@/components/ui/primitives";
+import { Avatar, EmptyState, Stars } from "@/components/ui/primitives";
 import { useToast } from "@/components/ui/toast";
 
 export interface ProfileData {
@@ -47,8 +47,15 @@ export function ProfileView({
   const following = useNest((s) => s.following.includes(profile.id));
   const toggleFollow = useNest((s) => s.toggleFollow);
   const startConversation = useNest((s) => s.startConversation);
+  const ensurePost = useNest((s) => s.ensurePost);
   const [tab, setTab] = useState<Tab>("posts");
-  const [lightbox, setLightbox] = useState<string | null>(null);
+
+  // Gallery tiles are this profile's posts: open them in View Post (→ Comments / Report).
+  const openPost = (src: string, i: number) => {
+    const post = galleryPost(profile, src, i);
+    ensurePost(post);
+    router.push(`/social/post/${post.id}`);
+  };
 
   const message = () => {
     const id = startConversation(profile.id, profile.name, profile.avatar);
@@ -129,21 +136,24 @@ export function ProfileView({
 
           {profile.bio && <p className="text-[14px] leading-relaxed text-muted">{profile.bio}</p>}
 
-          <div className="inline-flex w-fit flex-wrap items-center gap-2 rounded-[22px] bg-surface-2 p-2 pl-3">
+          <div className="inline-flex w-full flex-wrap items-center gap-2 rounded-[22px] bg-surface-2 p-2 pl-3 sm:w-fit">
             <StatCell value={String(profile.stats.posts)} label="Posts" />
             <StatCell value={profile.stats.followers} label="Followers" />
             <StatCell value={String(profile.stats.followings)} label="Followings" />
-            <Button
-              variant="outline"
-              size="md"
+            {/* outline Follow button with an orange border (not the white outline variant) */}
+            <button
+              type="button"
               onClick={() => {
                 toggleFollow(profile.id);
                 toast(following ? `Unfollowed ${profile.name}` : `Following ${profile.name}`, "success");
               }}
-              className={cn("ml-3 min-w-[110px]", following ? "border-accent text-accent" : "border-accent")}
+              className={cn(
+                "inline-flex h-13 min-w-[110px] items-center justify-center rounded-full border border-accent px-7 text-[15px] font-semibold transition hover:bg-accent/10 sm:ml-3",
+                following ? "text-accent" : "text-text",
+              )}
             >
               {following ? "Following" : "Follow"}
-            </Button>
+            </button>
             <Button size="md" onClick={message} className="min-w-[110px]">
               Message
             </Button>
@@ -166,7 +176,7 @@ export function ProfileView({
                   <button
                     key={`${src}-${i}`}
                     type="button"
-                    onClick={() => setLightbox(src)}
+                    onClick={() => openPost(src, i)}
                     className="group relative aspect-[3/4] overflow-hidden rounded-[16px] bg-surface-2"
                     aria-label="Open post"
                   >
@@ -194,15 +204,27 @@ export function ProfileView({
         </div>
       </div>
 
-      <Modal open={!!lightbox} onClose={() => setLightbox(null)} title={profile.name} className="max-w-[640px]">
-        {lightbox && (
-          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[20px]">
-            <Image src={lightbox} alt="" fill sizes="640px" className="object-cover" />
-          </div>
-        )}
-      </Modal>
     </FlowPage>
   );
+}
+
+/** A feed post for one of a profile's gallery tiles (stable id, so likes/comments stick). */
+function galleryPost(profile: ProfileData, src: string, i: number): Post {
+  return {
+    id: `pv-${profile.id}-${i}`,
+    authorId: profile.id,
+    authorName: profile.name,
+    authorAvatar: profile.avatar,
+    createdAt: new Date(Date.now() - (i + 1) * 86_400_000).toISOString(),
+    title: profile.name,
+    caption: profile.bio ?? profile.name,
+    media: [{ url: src, type: /\.(mp4|webm|mov)$/i.test(src) ? "video" : "image" }],
+    likes: 1200 + i * 137,
+    comments: 0,
+    shares: 40 + i * 7,
+    saves: 25 + i * 5,
+    location: profile.location,
+  };
 }
 
 function StatCell({ value, label }: { value: string; label: string }) {

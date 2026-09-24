@@ -16,7 +16,6 @@ export default function InterestsPage() {
   const saved = useNest((s) => s.interests);
   const hydrated = useNest((s) => s.hydrated);
   const setInterests = useNest((s) => s.setInterests);
-  const setOnboarded = useNest((s) => s.setOnboarded);
   const updateUser = useNest((s) => s.updateUser);
   const [selected, setSelected] = useState<string[]>([]);
 
@@ -36,13 +35,12 @@ export default function InterestsPage() {
     }
     setInterests(selected);
     updateUser({ interests: selected });
-    setOnboarded(true);
-    toast("You're all set!", "success");
-    router.push("/dashboard");
+    toast("Interests saved", "success");
+    router.push("/onboarding/profile");
   };
 
   return (
-    <FlowPage title="Back" backHref="/onboarding/profile" width="sm">
+    <FlowPage title="Back" backHref="/auth/sign-up" width="sm">
       <div className="flex flex-col gap-8">
         <DisplayTitle sub="Interest tags personalize discovery">
           Choose

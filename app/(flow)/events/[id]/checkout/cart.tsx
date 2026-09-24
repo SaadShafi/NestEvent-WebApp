@@ -26,9 +26,7 @@ export function Cart({ id }: { id: string }) {
   const toast = useToast();
   const event = useNest((s) => s.events.find((e) => e.id === id));
   const cart = useNest((s) => s.cart);
-  const addresses = useNest((s) => s.addresses);
   const setCart = useNest((s) => s.setCart);
-  const placeOrder = useNest((s) => s.placeOrder);
 
   const [busy, setBusy] = useState(false);
 
@@ -69,25 +67,14 @@ export function Cart({ id }: { id: string }) {
       return;
     }
     setCart(event.id, lines);
-    if (addresses.length === 0) {
-      router.push("/checkout/address");
-      return;
-    }
     setBusy(true);
-    const addr = addresses.find((a) => a.isDefault) ?? addresses[0];
-    const order = placeOrder(addr);
-    if (!order) {
-      setBusy(false);
-      toast("Could not place the order", "error");
-      return;
-    }
-    toast("Order placed", "success");
-    router.push(`/checkout/success?order=${order.id}`);
+    // Cart → Checkout (delivery address, order summary, promo, payment) → Checkout Successfully.
+    router.push("/checkout");
   };
 
   return (
     <FlowPage title="Cart" backHref={`/events/${event.id}`} width="full">
-      <div className="grid items-start gap-10 lg:grid-cols-[420px_440px] xl:gap-24">
+      <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,420px)_minmax(0,440px)] xl:gap-24">
         <div className="flex flex-col gap-4">
           {event.ticketTypes.length === 0 && <EmptyState title="No tickets available" sub="This event has no ticket types yet." />}
           {event.ticketTypes.map((t) => {
@@ -96,7 +83,7 @@ export function Cart({ id }: { id: string }) {
               <div
                 key={t.id}
                 className={cn(
-                  "flex items-center justify-between gap-4 rounded-[24px] border bg-surface-2 px-7 py-6 transition",
+                  "flex flex-wrap items-center justify-between gap-4 rounded-[24px] border bg-surface-2 px-5 py-5 transition sm:flex-nowrap sm:px-7 sm:py-6",
                   v > 0 ? "border-accent" : "border-transparent",
                 )}
               >

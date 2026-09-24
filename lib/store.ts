@@ -82,10 +82,14 @@ export interface NestState {
   setCart: (eventId: string, lines: CartLine[]) => void;
   clearCart: () => void;
   addAddress: (a: DeliveryAddress) => void;
-  placeOrder: (address?: DeliveryAddress) => Order | null;
+  updateAddress: (index: number, a: DeliveryAddress) => void;
+  /** `discount` is a promo fraction (0.1 = 10% off the ticket subtotal). */
+  placeOrder: (address?: DeliveryAddress, discount?: number) => Order | null;
 
   addPost: (p: Omit<Post, "id" | "createdAt" | "likes" | "comments" | "shares" | "saves">) => Post;
   addComment: (postId: string, text: string, parentId?: string) => void;
+  /** Adds a post (e.g. an organization/profile gallery item) if it isn't in the feed yet. */
+  ensurePost: (p: Post) => void;
 
   sendMessage: (conversationId: string, text: string, attachment?: Message["attachment"]) => void;
   markConversationRead: (conversationId: string) => void;
@@ -208,7 +212,11 @@ export const useNest = create<NestState>()(
             ? [a, ...s.addresses.map((x) => ({ ...x, isDefault: false }))]
             : [...s.addresses, a],
         })),
-      placeOrder: (address) => {
+      updateAddress: (index, a) =>
+        set((s) => ({
+          addresses: s.addresses.map((x, i) => (i === index ? a : a.isDefault ? { ...x, isDefault: false } : x)),
+        })),
+      placeOrder: (address, discount = 0) => {
         const s = get();
         if (!s.cart || !s.cart.lines.length) return null;
         const ev = s.events.find((e) => e.id === s.cart!.eventId);
@@ -224,7 +232,7 @@ export const useNest = create<NestState>()(
             code: ticketCode(),
           };
         });
-        const subtotal = tickets.reduce((a, t) => a + t.qty * t.unitPrice, 0);
+        const subtotal = tickets.reduce((a, t) => a + t.qty * t.unitPrice, 0) * (1 - discount);
         const tax = Math.round(subtotal * 0.0102 * 100) / 100;
         const order: Order = {
           id: uid("ord"),
@@ -252,6 +260,7 @@ export const useNest = create<NestState>()(
         set((s) => ({ posts: [post, ...s.posts] }));
         return post;
       },
+      ensurePost: (p) => set((s) => (s.posts.some((x) => x.id === p.id) ? {} : { posts: [...s.posts, p] })),
       addComment: (postId, text, parentId) =>
         set((s) => {
           const me = s.user;

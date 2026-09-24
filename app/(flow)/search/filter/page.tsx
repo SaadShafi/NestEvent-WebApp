@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import type { LocationValue } from "@/lib/types";
 import { FlowPage } from "@/components/shell/flow-layout";
 import { Button } from "@/components/ui/button";
@@ -10,21 +10,43 @@ import { IconCalendar } from "@/components/ui/icons";
 import { LocationInput } from "@/components/ui/location-input";
 
 export default function FilterPage() {
+  return (
+    <Suspense fallback={<div className="grid min-h-screen place-items-center text-dim">Loading…</div>}>
+      <Filter />
+    </Suspense>
+  );
+}
+
+const num = (v: string | null, fallback: number) => (v != null && v !== "" && !Number.isNaN(Number(v)) ? Number(v) : fallback);
+
+function Filter() {
   const router = useRouter();
-  const [category, setCategory] = useState("events");
-  const [location, setLocation] = useState<LocationValue | null>(null);
-  const [date, setDate] = useState("");
-  const [price, setPrice] = useState<[number, number]>([150, 250]);
-  const [distance, setDistance] = useState<[number, number]>([25, 40]);
+  // "Edit" on the Filter Result screen comes back here with the current filters in the URL.
+  const params = useSearchParams();
+  const [category, setCategory] = useState(params.get("category") ?? "events");
+  const [location, setLocation] = useState<LocationValue | null>(() => {
+    const address = params.get("loc");
+    if (!address) return null;
+    const lat = params.get("lat");
+    const lng = params.get("lng");
+    return { address, lat: lat ? Number(lat) : undefined, lng: lng ? Number(lng) : undefined };
+  });
+  const [date, setDate] = useState(params.get("date") ?? "");
+  const [price, setPrice] = useState<[number, number]>([num(params.get("min"), 150), num(params.get("max"), 250)]);
+  const [distance, setDistance] = useState<[number, number]>([num(params.get("dmin"), 25), num(params.get("dist"), 40)]);
 
   const apply = () => {
     const p = new URLSearchParams();
-    p.set("category", category);
-    const q = location?.city ?? location?.address ?? "";
+    const q = params.get("q");
     if (q) p.set("q", q);
+    p.set("results", "1");
+    p.set("category", category);
+    const loc = location?.address?.trim() ?? "";
+    if (loc) p.set("loc", loc);
     if (date) p.set("date", date);
     p.set("min", String(price[0]));
     p.set("max", String(price[1]));
+    p.set("dmin", String(distance[0]));
     p.set("dist", String(distance[1]));
     if (location?.lat != null && location?.lng != null) {
       p.set("lat", String(location.lat));

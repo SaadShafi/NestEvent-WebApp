@@ -28,6 +28,7 @@ export default function ProfileSetupPage() {
   const toast = useToast();
   const user = useNest((s) => s.user);
   const updateUser = useNest((s) => s.updateUser);
+  const setOnboarded = useNest((s) => s.setOnboarded);
 
   const [avatar, setAvatar] = useState<string>("");
   const [avatarType, setAvatarType] = useState<string>("");
@@ -125,12 +126,13 @@ export default function ProfileSetupPage() {
         zipcode: zipcode.trim() || undefined,
       },
     });
-    toast("Profile saved", "success");
-    router.push("/onboarding/interests");
+    setOnboarded(true);
+    toast("You're all set!", "success");
+    router.push("/dashboard");
   };
 
   return (
-    <FlowPage title="Back" backHref="/auth/sign-in" width="sm">
+    <FlowPage title="Back" backHref="/onboarding/interests" width="sm">
       <form onSubmit={submit} className="flex flex-col gap-6" noValidate>
         <DisplayTitle sub="Add your photo or Short Videos that recognize identity">Profile Setup</DisplayTitle>
 

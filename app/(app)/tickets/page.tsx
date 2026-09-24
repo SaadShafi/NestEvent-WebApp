@@ -15,13 +15,17 @@ export default function TicketsPage() {
   const [tab, setTab] = useState<Tab>("upcoming");
 
   const today = new Date().toISOString().slice(0, 10);
-  const rows = useMemo(
-    () =>
-      orders
-        .map((o) => ({ order: o, event: events.find((e) => e.id === o.eventId) }))
-        .filter((r): r is { order: (typeof orders)[number]; event: NonNullable<(typeof events)[number]> } => !!r.event),
-    [orders, events],
-  );
+  // One card per event (several orders for the same event share its Ticket Order screen).
+  const rows = useMemo(() => {
+    const seen = new Set<string>();
+    return orders
+      .map((o) => ({ order: o, event: events.find((e) => e.id === o.eventId) }))
+      .filter((r): r is { order: (typeof orders)[number]; event: NonNullable<(typeof events)[number]> } => {
+        if (!r.event || seen.has(r.event.id)) return false;
+        seen.add(r.event.id);
+        return true;
+      });
+  }, [orders, events]);
   const upcoming = rows.filter((r) => r.event.startDate >= today);
   const past = rows.filter((r) => r.event.startDate < today);
   const list = tab === "upcoming" ? upcoming : past;
@@ -53,7 +57,7 @@ export default function TicketsPage() {
       ) : (
         <div className="flex flex-wrap gap-6">
           {list.map((r) => (
-            <EventCard key={r.order.id} event={r.event} href={`/tickets/${r.order.id}`} />
+            <EventCard key={r.order.id} event={r.event} href={`/events/${r.event.id}`} />
           ))}
         </div>
       )}

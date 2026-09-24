@@ -1,13 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, type ReactNode } from "react";
-import { money } from "@/lib/data";
+import { useState, type ReactNode } from "react";
 import { useNest } from "@/lib/store";
 import type { TicketType } from "@/lib/types";
-import { cn, copyText, isEmail, uid } from "@/lib/utils";
+import { copyText, uid } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Field, Input, Select } from "@/components/ui/form";
+import { Field, Input } from "@/components/ui/form";
 import { FlowPage } from "@/components/shell/flow-layout";
 import { Modal } from "@/components/ui/primitives";
 import { useToast } from "@/components/ui/toast";
@@ -22,14 +22,28 @@ import {
 } from "@/components/ui/icons";
 import { EventHero, EventOverview, HeroPill } from "../../_components/event-overview";
 import { TicketEditorModal } from "../../_components/ticket-editor-modal";
+import { useEventOps } from "./_lib/event-ops";
+import { IconCash, IconGift, IconReceipt, IconScan } from "./_lib/ops-ui";
 
-type Panel = "analytics" | "links" | "promo" | null;
+type Panel = "links" | "promo" | null;
 
-/** Deterministic pseudo-random page visits so the number is stable per event. */
-function fakeVisits(id: string) {
-  let h = 0;
-  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return 1200 + (h % 8000);
+const rowIcon = "grid h-12 w-12 shrink-0 place-items-center rounded-full bg-surface text-accent";
+
+/** Navigation row (right chevron) into one of the event's management screens. */
+function LinkRow({ href, icon, title, sub, badge }: { href: string; icon: ReactNode; title: string; sub: string; badge?: number }) {
+  return (
+    <Link href={href} className="flex w-full items-center gap-4 rounded-[28px] bg-surface-2 px-5 py-4 transition hover:bg-surface-3/40">
+      <span className={rowIcon}>{icon}</span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-[17px] font-medium text-text">{title}</span>
+        <span className="text-sm text-dim">{sub}</span>
+      </span>
+      {!!badge && (
+        <span className="grid h-6 min-w-6 place-items-center rounded-full bg-accent px-2 text-xs font-semibold text-white">{badge}</span>
+      )}
+      <IconChevronRight size={20} className="shrink-0 text-text" />
+    </Link>
+  );
 }
 
 function ActionRow({
@@ -67,17 +81,14 @@ export function ViewEvent({ id }: { id: string }) {
   const toast = useToast();
   const hydrated = useNest((s) => s.hydrated);
   const event = useNest((s) => s.events.find((e) => e.id === id));
-  const orders = useNest((s) => s.orders);
   const setDraft = useNest((s) => s.setDraft);
   const deleteEvent = useNest((s) => s.deleteEvent);
   const updateEvent = useNest((s) => s.updateEvent);
+  const { refunds } = useEventOps(event);
+  const pendingRefunds = refunds.filter((r) => r.status === "pending").length;
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState<TicketType | null>(null);
-  const [comp, setComp] = useState(false);
-  const [compEmail, setCompEmail] = useState("");
-  const [compType, setCompType] = useState("");
-  const [compQty, setCompQty] = useState(1);
   const [panel, setPanel] = useState<Panel>(null);
   const [links, setLinks] = useState([
     { id: "l1", label: "Instagram bio", url: `https://nest.app/e/${id}?ref=ig`, clicks: 412 },
@@ -86,13 +97,6 @@ export function ViewEvent({ id }: { id: string }) {
   const [promos, setPromos] = useState<{ id: string; code: string; off: number; uses: number }[]>([]);
   const [promoCode, setPromoCode] = useState("");
   const [promoOff, setPromoOff] = useState(10);
-
-  const stats = useMemo(() => {
-    const mine = orders.filter((o) => o.eventId === id);
-    const revenue = mine.reduce((a, o) => a + o.total, 0);
-    const sold = mine.reduce((a, o) => a + o.tickets.reduce((b, t) => b + t.qty, 0), 0);
-    return { revenue, sold, visits: fakeVisits(id) };
-  }, [orders, id]);
 
   if (!hydrated) {
     return (
@@ -123,13 +127,6 @@ export function ViewEvent({ id }: { id: string }) {
     setConfirmDelete(false);
     toast("Event deleted", "success");
     router.push("/organizer/events");
-  };
-  const sendComp = () => {
-    if (!isEmail(compEmail)) return toast("Enter a valid email address", "error");
-    if (!compType) return toast("Choose a ticket type", "error");
-    setComp(false);
-    setCompEmail("");
-    toast("Complimentary tickets sent", "success");
   };
   const addPromo = () => {
     const code = promoCode.trim().toUpperCase();
@@ -169,30 +166,22 @@ export function ViewEvent({ id }: { id: string }) {
           onEditTicket={(t) => setEditing(t)}
           rightExtra={
             <div className="flex flex-col gap-4">
-              <Button variant="outline" size="lg" block onClick={() => setComp(true)}>
+              <Button
+                variant="outline"
+                size="lg"
+                block
+                href={`/organizer/events/${event.id}/complimentary`}
+                icon={<IconGift size={20} />}
+              >
                 Send Complimentary Tickets
               </Button>
 
-              <ActionRow
+              <LinkRow
+                href={`/organizer/events/${event.id}/analytics`}
                 icon={<IconAnalytics size={22} />}
                 title="View Analytics"
                 sub="Revenue, Tickets Sold, Page Visits"
-                open={panel === "analytics"}
-                onClick={() => setPanel(panel === "analytics" ? null : "analytics")}
-              >
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { label: "Revenue", value: money(stats.revenue) },
-                    { label: "Tickets Sold", value: stats.sold.toLocaleString("en-US") },
-                    { label: "Page Visits", value: stats.visits.toLocaleString("en-US") },
-                  ].map((s) => (
-                    <div key={s.label} className="flex flex-col gap-1 rounded-[18px] bg-surface px-4 py-4">
-                      <span className="text-xs text-dim">{s.label}</span>
-                      <span className="text-[20px] font-semibold text-text">{s.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </ActionRow>
+              />
 
               <ActionRow
                 icon={<IconLink size={22} />}
@@ -262,6 +251,26 @@ export function ViewEvent({ id }: { id: string }) {
                   )}
                 </div>
               </ActionRow>
+
+              <LinkRow
+                href={`/organizer/events/${event.id}/scan`}
+                icon={<IconScan size={22} />}
+                title="Scan Tickets"
+                sub="Check in attendees at the door"
+              />
+              <LinkRow
+                href={`/organizer/events/${event.id}/orders`}
+                icon={<IconReceipt size={22} />}
+                title="Orders"
+                sub="View ticket orders"
+              />
+              <LinkRow
+                href={`/organizer/events/${event.id}/refunds`}
+                icon={<IconCash size={22} />}
+                title="Refund Requests"
+                sub="Approve or decline"
+                badge={pendingRefunds}
+              />
             </div>
           }
         />
@@ -279,34 +288,6 @@ export function ViewEvent({ id }: { id: string }) {
             Delete Event
           </Button>
         </div>
-      </Modal>
-
-      <Modal open={comp} onClose={() => setComp(false)} title="Send Complimentary Tickets">
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            sendComp();
-          }}
-        >
-          <Field label="Recipient Email">
-            <Input type="email" value={compEmail} onChange={(e) => setCompEmail(e.target.value)} placeholder="guest@email.com" />
-          </Field>
-          <Field label="Ticket Type">
-            <Select
-              placeholder="Choose ticket type"
-              value={compType}
-              onChange={(e) => setCompType(e.target.value)}
-              options={event.ticketTypes.map((t) => ({ value: t.id, label: `${t.name} · ${money(t.price)}` }))}
-            />
-          </Field>
-          <Field label="Quantity">
-            <Input type="number" min={1} max={10} value={compQty} onChange={(e) => setCompQty(Math.max(1, Number(e.target.value)))} />
-          </Field>
-          <Button type="submit" variant="white" block className={cn("mt-2")}>
-            Send Tickets
-          </Button>
-        </form>
       </Modal>
 
       <TicketEditorModal

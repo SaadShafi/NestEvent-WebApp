@@ -22,7 +22,7 @@ export function QrTicket({ orderId, ticketId }: { orderId: string; ticketId: str
 
   if (!order || !event || !ticket) {
     return (
-      <FlowPage title="Ticket" backHref="/tickets" width="sm">
+      <FlowPage title="Ticket" backHref="/tickets" width="sm" stacked>
         <EmptyState title="Ticket not found" action={<Button href="/tickets">My Tickets</Button>} />
       </FlowPage>
     );
@@ -34,8 +34,9 @@ export function QrTicket({ orderId, ticketId }: { orderId: string; ticketId: str
   const cost = ticket.qty * ticket.unitPrice;
 
   return (
-    <FlowPage title="Ticket" backHref={`/tickets/${order.id}`} width="sm">
-      <div className="flex max-w-[420px] flex-col gap-4">
+    <FlowPage title="Ticket" backHref={`/tickets/${order.id}`} width="sm" stacked>
+      {/* ticket centred on the screen */}
+      <div className="mx-auto flex w-full max-w-[420px] flex-col gap-4">
         {/* Poster header */}
         <div className="relative h-[215px] overflow-hidden rounded-[28px] bg-surface-2">
           <Image src={event.cover} alt="" fill sizes="420px" className="object-cover" priority />
@@ -54,7 +55,7 @@ export function QrTicket({ orderId, ticketId }: { orderId: string; ticketId: str
         <div className="ticket-notch relative rounded-[28px] bg-surface-2 px-4 pb-6 pt-5">
           <p className="text-[12px] text-dim">Place</p>
           <p className="mt-1 text-[16px] text-text">{place}</p>
-          <div className="mt-4 grid grid-cols-3 gap-3">
+          <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
             <Stat value={String(ticket.qty)} label="Person" />
             <Stat value={ticket.ticketTypeName} label="Class" />
             <Stat value={money(cost).replace(/\.00$/, "")} label="Cost" />
@@ -83,7 +84,7 @@ export function QrTicket({ orderId, ticketId }: { orderId: string; ticketId: str
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-[16px] bg-bg px-2 py-4">
-      <span className="line-clamp-1 text-[22px] text-text">{value}</span>
+      <span className="line-clamp-1 max-w-full text-[18px] text-text sm:text-[22px]">{value}</span>
       <span className="text-[12px] text-dim">{label}</span>
     </div>
   );

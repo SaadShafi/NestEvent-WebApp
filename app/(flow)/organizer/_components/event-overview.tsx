@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import { AVATARS, formatTime12 } from "@/lib/data";
 import type { LocationValue, TicketType } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { LocationInput } from "@/components/ui/location-input";
 import { MapView } from "@/components/ui/map-view";
 import { Avatar, AvatarGroup, Rating } from "@/components/ui/primitives";
 import { IconCalendarSolid, IconClose, IconEdit, IconPin, IconTrash } from "@/components/ui/icons";
@@ -121,26 +122,37 @@ export function TicketTypeCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 rounded-[24px] bg-surface-2 px-6 py-6 border transition",
+        "flex flex-col gap-3 rounded-[24px] bg-surface-2 px-5 py-5 border transition sm:px-6 sm:py-6",
         highlighted ? "border-accent" : "border-transparent",
       )}
     >
       <div className="flex items-center gap-3">
-        <span className="font-display text-[22px] font-bold text-text">{ticket.name}</span>
-        {onEdit && (
-          <HeroPill onClick={onEdit} icon={<IconEdit size={13} />}>
-            Edit
-          </HeroPill>
-        )}
-        {onDelete && (
-          <button
-            type="button"
-            onClick={onDelete}
-            className="ml-auto grid h-8 w-8 place-items-center rounded-full text-danger hover:bg-danger/10"
-            aria-label={`Delete ${ticket.name}`}
-          >
-            <IconTrash size={16} />
-          </button>
+        <span className="min-w-0 flex-1 break-words font-display text-[20px] font-bold text-text sm:text-[22px]">{ticket.name}</span>
+        {(onEdit || onDelete) && (
+          <div className="flex shrink-0 items-center gap-2">
+            {onEdit && (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="grid h-8 w-8 place-items-center rounded-full bg-surface-3 text-text transition hover:bg-surface"
+                aria-label={`Edit ${ticket.name}`}
+                title="Edit"
+              >
+                <IconEdit size={14} />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={onDelete}
+                className="grid h-8 w-8 place-items-center rounded-full bg-danger/10 text-danger transition hover:bg-danger/20"
+                aria-label={`Delete ${ticket.name}`}
+                title="Delete"
+              >
+                <IconTrash size={14} />
+              </button>
+            )}
+          </div>
         )}
       </div>
       <p className="text-sm text-muted">{ticketDetails(ticket)}</p>
@@ -161,7 +173,9 @@ export function EventOverview({
   detailsLabel = "Event Details",
   onEditTicket,
   onDeleteTicket,
-  onClearLocation,
+  onLocationChange,
+  onPickOnMap,
+  onUseMyLocation,
   rightExtra,
   footer,
 }: {
@@ -169,7 +183,12 @@ export function EventOverview({
   detailsLabel?: string;
   onEditTicket?: (t: TicketType) => void;
   onDeleteTicket?: (t: TicketType) => void;
-  onClearLocation?: () => void;
+  /** Makes the Location section editable (Review Event): search / current-location input above the map. */
+  onLocationChange?: (v: LocationValue | null) => void;
+  /** Click on the map preview to drop the pin there (only with onLocationChange). */
+  onPickOnMap?: (pos: { lat: number; lng: number }) => void;
+  /** Orange pin button on the map (Figma): set the location from the device position. */
+  onUseMyLocation?: () => void;
   rightExtra?: ReactNode;
   footer?: ReactNode;
 }) {
@@ -252,21 +271,49 @@ export function EventOverview({
 
         <div className="flex flex-col gap-4">
           <h3 className="text-[19px] font-semibold text-text">Location</h3>
-          <div className="flex items-center gap-3 px-2">
-            <IconPin size={20} className="shrink-0 text-accent" />
-            <span className="flex-1 text-[15px] text-text">{event.location?.address || "No address set"}</span>
-            {onClearLocation && event.location?.address && (
+          {/* Figma: pin + address + orange ✕ once set; the search field only while no address is chosen */}
+          {onLocationChange && !event.location?.address ? (
+            <LocationInput value={null} onChange={onLocationChange} placeholder="Enter Location" />
+          ) : (
+            <div className="flex items-center gap-3 px-2">
+              <IconPin size={22} className="shrink-0 text-accent" />
+              <span className="line-clamp-2 min-w-0 flex-1 text-[16px] text-text" title={event.location?.address}>{event.location?.address || "No address set"}</span>
+              {onLocationChange && (
+                <button
+                  type="button"
+                  onClick={() => onLocationChange(null)}
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-accent text-white transition hover:brightness-110"
+                  aria-label="Clear location"
+                  title="Change location"
+                >
+                  <IconClose size={12} />
+                </button>
+              )}
+            </div>
+          )}
+          <div className="relative">
+            <MapView
+              lat={event.location?.lat}
+              lng={event.location?.lng}
+              address={event.location?.address || [event.venue, event.location?.city, event.location?.country].filter(Boolean).join(", ")}
+              className={onLocationChange ? "h-[210px]" : "h-[170px]"}
+              label={event.venue}
+              interactive={!!onLocationChange}
+              zoomControl={false}
+              onPick={onLocationChange ? onPickOnMap : undefined}
+            />
+            {onUseMyLocation && (
               <button
                 type="button"
-                onClick={onClearLocation}
-                className="grid h-6 w-6 place-items-center rounded-full bg-accent text-white"
-                aria-label="Clear location"
+                onClick={onUseMyLocation}
+                className="absolute bottom-3 right-3 z-[1000] grid h-12 w-12 place-items-center rounded-full bg-accent text-white shadow-[0_8px_24px_rgba(255,106,0,0.45)] transition hover:brightness-110"
+                aria-label="Use my current location"
+                title="Use my current location"
               >
-                <IconClose size={11} />
+                <IconPin size={22} />
               </button>
             )}
           </div>
-          <MapView lat={event.location?.lat} lng={event.location?.lng} className="h-[170px]" label={event.venue} interactive={false} />
         </div>
 
         {rightExtra}

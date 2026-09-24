@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthSplit } from "@/components/shell/auth-layout";
+import { NestLogo } from "@/components/ui/nest-logo";
 import { IconCheckCircle } from "@/components/ui/icons";
 import { useNest } from "@/lib/store";
 import type { Role } from "@/lib/types";
@@ -46,11 +47,9 @@ export default function RolePage() {
   return (
     <AuthSplit>
       <div className="flex flex-col items-center">
-        <span className="relative mb-5 block h-[70px] w-[120px]">
-          <Image src="/brand/nest-logo.png" alt="Nest" fill sizes="120px" className="object-contain" priority />
-        </span>
-        <h1 className="font-display text-[34px] font-extrabold text-text">Select Your Role</h1>
-        <p className="mt-2 text-[15px] text-muted">Choose how you&apos;d like to use Nest</p>
+        <NestLogo priority className="mb-5 h-16 md:h-20" />
+        <h1 className="text-center font-display text-[30px] font-extrabold text-text sm:text-[34px]">Select Your Role</h1>
+        <p className="mt-2 text-center text-[15px] text-muted">Choose how you&apos;d like to use Nest</p>
 
         <div className="mt-10 flex w-full flex-col gap-5">
           {ROLES.map((r) => {
@@ -62,8 +61,8 @@ export default function RolePage() {
                 onClick={() => setLocal(r.value)}
                 aria-pressed={active}
                 className={cn(
-                  "relative w-full rounded-[24px] border bg-[#151515] px-6 py-6 text-left transition",
-                  active ? "border-accent shadow-[0_0_0_1px_rgba(255,106,0,0.4)]" : "border-transparent hover:border-border",
+                  "relative w-full rounded-[24px] border bg-[#0b0b0b] px-5 py-5 text-left transition sm:px-6 sm:py-6",
+                  active ? "border-accent shadow-[0_0_0_1px_rgba(255,106,0,0.4)]" : "border-border-soft hover:border-border",
                 )}
               >
                 {active && (
@@ -82,7 +81,7 @@ export default function RolePage() {
         <button
           type="button"
           onClick={start}
-          className="mt-8 h-13 w-full rounded-full border border-border bg-surface text-[15px] font-semibold text-text transition hover:bg-surface-3"
+          className="mt-8 h-13 w-full rounded-full border border-border bg-[#0b0b0b] text-[15px] font-semibold text-text transition hover:bg-surface-3"
         >
           Get Started
         </button>

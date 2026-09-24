@@ -319,17 +319,31 @@ export function Counter({
   );
 }
 
+// Flags are SVG files (public/flags) — emoji flags render as plain letters ("US") on Windows.
 const COUNTRIES = [
-  { code: "US", dial: "+1", flag: "🇺🇸" },
-  { code: "GB", dial: "+44", flag: "🇬🇧" },
-  { code: "CA", dial: "+1", flag: "🇨🇦" },
-  { code: "PK", dial: "+92", flag: "🇵🇰" },
-  { code: "IN", dial: "+91", flag: "🇮🇳" },
-  { code: "AE", dial: "+971", flag: "🇦🇪" },
-  { code: "DE", dial: "+49", flag: "🇩🇪" },
-  { code: "FR", dial: "+33", flag: "🇫🇷" },
-  { code: "AU", dial: "+61", flag: "🇦🇺" },
+  { code: "US", dial: "+1", name: "United States" },
+  { code: "GB", dial: "+44", name: "United Kingdom" },
+  { code: "CA", dial: "+1", name: "Canada" },
+  { code: "PK", dial: "+92", name: "Pakistan" },
+  { code: "IN", dial: "+91", name: "India" },
+  { code: "AE", dial: "+971", name: "United Arab Emirates" },
+  { code: "DE", dial: "+49", name: "Germany" },
+  { code: "FR", dial: "+33", name: "France" },
+  { code: "AU", dial: "+61", name: "Australia" },
 ];
+
+export function Flag({ code, className }: { code: string; className?: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- tiny static SVG, no optimisation needed
+    <img
+      src={`/flags/${code.toLowerCase()}.svg`}
+      alt={code}
+      width={24}
+      height={24}
+      className={cn("h-6 w-6 shrink-0 rounded-full object-cover", className)}
+    />
+  );
+}
 
 export function PhoneInput({
   value,
@@ -337,18 +351,23 @@ export function PhoneInput({
   dial,
   onDialChange,
   placeholder = "Phone Number",
+  className,
 }: {
   value: string;
   onChange: (v: string) => void;
   dial: string;
   onDialChange: (v: string) => void;
   placeholder?: string;
+  className?: string;
 }) {
-  const c = COUNTRIES.find((x) => x.dial === dial) ?? COUNTRIES[0];
+  // Several countries share a dial code (US/CA = +1), so remember the picked country.
+  const [code, setCode] = useState(() => (COUNTRIES.find((x) => x.dial === dial) ?? COUNTRIES[0]).code);
+  const c =
+    COUNTRIES.find((x) => x.code === code && x.dial === dial) ?? COUNTRIES.find((x) => x.dial === dial) ?? COUNTRIES[0];
   return (
-    <div className="flex h-13 items-center rounded-full bg-surface pl-3 pr-5">
-      <div className="relative flex items-center gap-1">
-        <span className="text-xl">{c.flag}</span>
+    <div className={cn("flex h-13 items-center rounded-full border border-transparent bg-surface pl-4 pr-5", className)}>
+      <div className="relative flex shrink-0 items-center gap-1.5">
+        <Flag code={c.code} />
         <IconChevronDown size={14} className="text-muted" />
         <select
           aria-label="Country code"
@@ -356,12 +375,13 @@ export function PhoneInput({
           value={c.code}
           onChange={(e) => {
             const nc = COUNTRIES.find((x) => x.code === e.target.value)!;
+            setCode(nc.code);
             onDialChange(nc.dial);
           }}
         >
           {COUNTRIES.map((x) => (
             <option key={x.code} value={x.code}>
-              {x.flag} {x.code} {x.dial}
+              {x.name} ({x.dial})
             </option>
           ))}
         </select>
@@ -374,7 +394,7 @@ export function PhoneInput({
         value={value}
         onChange={(e) => onChange(e.target.value.replace(/[^\d\s-]/g, ""))}
         placeholder={placeholder}
-        className="h-full flex-1 bg-transparent text-sm text-text placeholder:text-dim"
+        className="h-full min-w-0 flex-1 bg-transparent text-sm text-text placeholder:text-dim"
       />
     </div>
   );
@@ -400,8 +420,9 @@ export function RangeSlider({
   return (
     <div className="flex flex-col gap-2">
       {rightLabel && <div className="text-right text-sm text-text">{rightLabel}</div>}
-      <div className="relative py-2">
-        <div className="range-track">
+      {/* track + both thumbs share one 22px box so the thumbs sit centred on the line */}
+      <div className="relative my-2 h-[22px]">
+        <div className="range-track absolute inset-x-[11px] top-1/2 -translate-y-1/2">
           <div className="range-fill" style={{ left: `${pct(lo)}%`, width: `${pct(hi) - pct(lo)}%` }} />
         </div>
         <input
@@ -423,13 +444,23 @@ export function RangeSlider({
           aria-label="Maximum"
         />
       </div>
-      <div className="relative h-5 text-xs text-text">
-        <span className="absolute -translate-x-1/2" style={{ left: `${pct(lo)}%` }}>
-          {format(lo)}
-        </span>
-        <span className="absolute -translate-x-1/2" style={{ left: `${pct(hi)}%` }}>
-          {format(hi)}
-        </span>
+      {/* labels shift from left- to right-aligned along the track so they never overflow;
+          close thumbs share one "min – max" label instead of overlapping */}
+      <div className="relative mx-[11px] h-5 whitespace-nowrap text-xs text-text">
+        {pct(hi) - pct(lo) < 22 ? (
+          <span className="absolute" style={{ left: `${(pct(lo) + pct(hi)) / 2}%`, transform: `translateX(-${(pct(lo) + pct(hi)) / 2}%)` }}>
+            {format(lo)} – {format(hi)}
+          </span>
+        ) : (
+          <>
+            <span className="absolute" style={{ left: `${pct(lo)}%`, transform: `translateX(-${pct(lo)}%)` }}>
+              {format(lo)}
+            </span>
+            <span className="absolute" style={{ left: `${pct(hi)}%`, transform: `translateX(-${pct(hi)}%)` }}>
+              {format(hi)}
+            </span>
+          </>
+        )}
       </div>
     </div>
   );

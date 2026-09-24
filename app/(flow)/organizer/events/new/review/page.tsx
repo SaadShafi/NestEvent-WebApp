@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { getCurrentPosition, reverseGeocode, suggestionToLocation } from "@/lib/geo";
 import { useNest } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { FlowPage } from "@/components/shell/flow-layout";
@@ -77,7 +78,29 @@ export default function ReviewEventPage() {
             writeTicketStash(null);
             router.push(`${WIZARD.ticketsAdd}?edit=${t.id}`);
           }}
-          onClearLocation={() => patch({ location: { address: "", country: draft.location?.country, city: draft.location?.city, zipcode: draft.location?.zipcode } })}
+          onLocationChange={(v) =>
+            patch({
+              location: v
+                ? { ...v, country: v.country ?? draft.location?.country, city: v.city ?? draft.location?.city, zipcode: v.zipcode ?? draft.location?.zipcode }
+                : { address: "", country: draft.location?.country, city: draft.location?.city, zipcode: draft.location?.zipcode },
+            })
+          }
+          onPickOnMap={async (pos) => {
+            // drop the pin immediately, then fill in the address for that spot
+            patch({ location: { ...draft.location, address: draft.location?.address || `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`, ...pos } });
+            const place = await reverseGeocode(pos.lat, pos.lng).catch(() => null);
+            if (place) patch({ location: { ...suggestionToLocation(place), ...pos } });
+          }}
+          onUseMyLocation={async () => {
+            try {
+              const pos = await getCurrentPosition();
+              const place = await reverseGeocode(pos.lat, pos.lng).catch(() => null);
+              patch({ location: place ? { ...suggestionToLocation(place), ...pos } : { address: `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`, ...pos } });
+              toast("Location detected", "success");
+            } catch (e) {
+              toast(e instanceof Error ? e.message : "Could not get your location", "error");
+            }
+          }}
           footer={
             <>
               <Button variant="white" size="md" onClick={saveDraft} className="min-w-[200px]">

@@ -22,6 +22,8 @@ function shortCountry(c?: string) {
 
 export function EventDetails({ id }: { id: string }) {
   const event = useNest((s) => s.events.find((e) => e.id === id));
+  // Guests who already bought tickets get "Ticket Order" instead of Buy (Figma: My Tickets → Event Details).
+  const order = useNest((s) => s.orders.find((o) => o.eventId === id));
   const [more, setMore] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
   const [mapOpen, setMapOpen] = useState(true);
@@ -39,7 +41,7 @@ export function EventDetails({ id }: { id: string }) {
   const toggle = (p: Panel) => setPanel((cur) => (cur === p ? null : p));
 
   return (
-    <FlowPage title="Event Details" backHref="/dashboard" width="xl">
+    <FlowPage title="Event Details" width="xl">
       <div className="flex flex-col gap-10">
         {/* Hero */}
         <div className="relative h-[280px] w-full overflow-hidden rounded-[28px] bg-surface-2">
@@ -52,7 +54,7 @@ export function EventDetails({ id }: { id: string }) {
           </div>
         </div>
 
-        <div className="grid gap-12 lg:grid-cols-[1fr_460px]">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,460px)]">
           {/* Left */}
           <div className="flex flex-col gap-7">
             <div className="flex flex-col gap-1">
@@ -84,18 +86,29 @@ export function EventDetails({ id }: { id: string }) {
               </p>
             </div>
 
-            <div className="mt-2 flex flex-wrap items-center gap-8">
-              <div className="flex flex-col">
-                <span className="text-[13px] text-dim">Price</span>
-                <span className="text-[22px] font-medium text-text">
-                  $ {event.price.toFixed(2)}
-                  <span className="text-[14px] text-muted">/Person</span>
-                </span>
+            {order ? (
+              <div className="mt-2 flex flex-wrap items-center gap-4">
+                <Button href={`/tickets/${order.id}`} variant="white" size="lg" className="min-w-[200px] flex-1 sm:flex-none">
+                  Ticket Order
+                </Button>
+                <Button href={`/events/${event.id}/checkout`} variant="ghost" size="lg" className="flex-1 sm:flex-none">
+                  Buy More
+                </Button>
               </div>
-              <Button href={`/events/${event.id}/checkout`} size="lg" className="min-w-[200px]">
-                {event.attendance === "rsvp" ? "RSVP" : "Buy Ticket"}
-              </Button>
-            </div>
+            ) : (
+              <div className="mt-2 flex flex-wrap items-center gap-8">
+                <div className="flex flex-col">
+                  <span className="text-[13px] text-dim">Price</span>
+                  <span className="text-[22px] font-medium text-text">
+                    $ {event.price.toFixed(2)}
+                    <span className="text-[14px] text-muted">/Person</span>
+                  </span>
+                </div>
+                <Button href={`/events/${event.id}/checkout`} size="lg" className="min-w-[200px]">
+                  {event.attendance === "rsvp" ? "RSVP" : "Buy Ticket"}
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Right */}
@@ -173,7 +186,7 @@ export function EventDetails({ id }: { id: string }) {
                   {mapOpen ? <IconClose size={12} /> : <IconPin size={12} />}
                 </button>
               </div>
-              {mapOpen && <MapView lat={event.location.lat} lng={event.location.lng} label={event.venue} className="h-[180px]" />}
+              {mapOpen && <MapView lat={event.location.lat} lng={event.location.lng} address={event.location.address || [event.venue, event.location.city, event.location.country].filter(Boolean).join(", ")} label={event.venue} className="h-[180px]" />}
             </div>
           </div>
         </div>

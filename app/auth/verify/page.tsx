@@ -13,7 +13,12 @@ function VerifyForm() {
   const router = useRouter();
   const toast = useToast();
   const params = useSearchParams();
+  // Forgot Password sends the code to a phone number; keep ?email= working for older links.
+  const phone = params.get("phone") ?? "";
   const email = params.get("email") ?? "";
+  const target = phone || email;
+  // Same OTP screen for both flows: sign-up continues to onboarding, forgot-password to a new password.
+  const isSignup = params.get("flow") === "signup";
 
   const [digits, setDigits] = useState<string[]>(["", "", "", ""]);
   const [seconds, setSeconds] = useState(RESEND_SECONDS);
@@ -76,8 +81,11 @@ function VerifyForm() {
     setSeconds(RESEND_SECONDS);
     setDigits(["", "", "", ""]);
     refs.current[0]?.focus();
-    toast(email ? `New code sent to ${email}` : "New code sent", "success");
+    toast(target ? `New code sent to ${target}` : "New code sent", "success");
   };
+
+  const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
+  const ss = String(seconds % 60).padStart(2, "0");
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -86,16 +94,17 @@ function VerifyForm() {
       return;
     }
     toast("Code verified", "success");
-    router.push("/auth/reset-password");
+    router.push(isSignup ? "/onboarding/interests" : "/auth/reset-password");
   };
 
-  const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
-  const ss = String(seconds % 60).padStart(2, "0");
-
   return (
-    <CenteredAuthCard title="OTP Verification" sub="Please enter 4 digit code we have sent you on your Email" backHref="/auth/forgot-password">
-      <form onSubmit={submit} className="flex flex-col items-center gap-6">
-        <div className="flex items-center gap-3">
+    <CenteredAuthCard
+      title="OTP Verification"
+      sub={`Please enter 4-digit code we have sent you on your ${phone ? "Phone Number" : "Email"}.`}
+      backHref={isSignup ? "/auth/sign-up" : "/auth/forgot-password"}
+    >
+      <form onSubmit={submit} className="flex flex-col items-center">
+        <div className="flex items-center gap-2">
           {digits.map((d, i) => (
             <input
               key={i}
@@ -113,26 +122,29 @@ function VerifyForm() {
               aria-label={`Digit ${i + 1}`}
               autoFocus={i === 0}
               className={cn(
-                "h-13 w-13 rounded-[14px] border bg-surface text-center text-lg font-semibold text-text outline-none transition focus:border-accent",
-                d ? "border-border-soft" : "border-transparent",
-                error && "border-danger/60",
+                "h-[43px] w-[43px] rounded-full border bg-white/10 text-center text-[13px] font-medium text-text outline-none transition focus:border-accent",
+                error ? "border-danger/60" : "border-white/25",
               )}
             />
           ))}
         </div>
-        {error && <p className="-mt-3 text-xs text-danger">{error}</p>}
+        {error && <p className="mt-2 text-xs text-danger">{error}</p>}
 
         {seconds > 0 ? (
-          <span className="inline-flex h-10 items-center rounded-full bg-surface px-5 text-xs text-muted">
+          <span className="mt-10 inline-flex h-11 items-center rounded-full border border-white/25 bg-white/10 px-6 text-[12px] text-text/90">
             Resend in {mm}:{ss}
           </span>
         ) : (
-          <button type="button" onClick={resend} className="inline-flex h-10 items-center rounded-full bg-surface px-5 text-xs font-semibold text-accent transition hover:bg-surface-3">
+          <button
+            type="button"
+            onClick={resend}
+            className="mt-10 inline-flex h-11 items-center rounded-full border border-accent/60 bg-white/10 px-6 text-[12px] font-semibold text-accent transition hover:bg-white/15"
+          >
             Resend
           </button>
         )}
 
-        <Button type="submit" variant="white" block className="mt-4">
+        <Button type="submit" variant="white" block className="mt-16 h-11! text-[13px]!">
           Continue
         </Button>
       </form>

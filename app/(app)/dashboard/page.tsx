@@ -9,8 +9,14 @@ import { EventCard } from "@/components/ui/event-card";
 import { Chip } from "@/components/ui/form";
 import { EmptyState, PageTitle } from "@/components/ui/primitives";
 import { IconPin } from "@/components/ui/icons";
+import { OrganizerDashboard } from "./_components/organizer-dashboard";
 
 export default function DashboardPage() {
+  const role = useNest((s) => s.role);
+  return role === "organizer" ? <OrganizerDashboard /> : <GuestDashboard />;
+}
+
+function GuestDashboard() {
   const events = useNest((s) => s.events);
   const currentLocation = useNest((s) => s.currentLocation);
   const [cat, setCat] = useState("All");

@@ -68,8 +68,6 @@ function Form({ draft, patch }: { draft: DraftEvent; patch: (p: Partial<DraftEve
         <Input type="number" min={0} value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} disabled={enabled === "disabled"} />
       </Field>
 
-      <h3 className="text-[15px] font-medium text-text">Complimentary Tickets</h3>
-
       <Field label="Eligibility">
         <Select value={eligibility} onChange={(e) => setEligibility(e.target.value)} options={ELIGIBILITY} />
       </Field>

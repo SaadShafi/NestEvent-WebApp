@@ -26,7 +26,7 @@ export default function SignInPage() {
   const finish = (addr: string) => {
     signIn(addr);
     toast("Welcome back!", "success");
-    router.push(onboarded ? "/dashboard" : "/onboarding/profile");
+    router.push(onboarded ? "/dashboard" : "/onboarding/interests");
   };
 
   const submit = (e: FormEvent) => {

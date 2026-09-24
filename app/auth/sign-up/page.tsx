@@ -45,8 +45,9 @@ export default function SignUpPage() {
       email: email.trim(),
       phone: `${dial} ${phone.trim()}`,
     });
-    toast("Account created", "success");
-    router.push("/onboarding/profile");
+    toast(`Verification code sent to ${email.trim()}`, "success");
+    // Sign Up → OTP → Choose Interests → Profile Setup → Dashboard
+    router.push(`/auth/verify?flow=signup&email=${encodeURIComponent(email.trim())}`);
   };
 
   return (

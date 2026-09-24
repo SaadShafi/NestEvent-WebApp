@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -20,6 +19,7 @@ import {
   IconPlus,
 } from "@/components/ui/icons";
 import { Avatar } from "@/components/ui/primitives";
+import { NestLogo } from "@/components/ui/nest-logo";
 import { LocationInput } from "@/components/ui/location-input";
 import { CreateMenu } from "@/components/shell/create-menu";
 
@@ -77,7 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const nav = NAV.filter((n) => n.roles.includes(role));
 
   const sidebar = (
-    <aside className="flex h-full w-[var(--sidebar-w)] flex-col justify-between border-r border-border bg-bg px-6 pb-8 pt-8">
+    <aside className="flex h-full w-[var(--sidebar-w)] max-w-[85vw] flex-col justify-between overflow-y-auto bg-bg px-6 pb-8 pt-3">
       <nav className="flex flex-col gap-2">
         {nav.map((n) => {
           const active = pathname === n.href || pathname.startsWith(n.href + "/");
@@ -96,15 +96,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
           );
         })}
-        {role === "organizer" && (
-          <button
-            type="button"
-            onClick={() => setCreateOpen(true)}
-            className="mt-2 flex h-[52px] items-center gap-3 rounded-[14px] bg-accent-gradient px-4 text-[16px] font-semibold text-white"
-          >
-            <IconPlus size={20} /> Create
-          </button>
-        )}
+        {/* Create popup: Post / verified event post (+ event & organization for organizers) */}
+        <button
+          type="button"
+          onClick={() => setCreateOpen(true)}
+          className="mt-2 flex h-[52px] items-center gap-3 rounded-[14px] bg-accent-gradient px-4 text-[16px] font-semibold text-white"
+        >
+          <IconPlus size={20} /> Create
+        </button>
       </nav>
       <button
         type="button"
@@ -121,40 +120,44 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-bg">
-      <header className="sticky top-0 z-40 flex h-[var(--topbar-h)] items-center gap-4 border-b border-border bg-bg px-4 md:px-8">
-        <button className="grid h-10 w-10 place-items-center rounded-full bg-surface md:hidden" onClick={() => setMobileNav((v) => !v)} aria-label="Menu">
-          <span className="block h-0.5 w-5 bg-text shadow-[0_-6px_0_#fcfcfc,0_6px_0_#fcfcfc]" />
-        </button>
-        <Link href="/dashboard" className="relative block h-12 w-[92px] shrink-0">
-          <Image src="/brand/nest-logo.png" alt="Nest" fill sizes="92px" className="object-contain" priority />
-        </Link>
+      {/* 3-column grid with equal flexible sides: the search field sits in the centre of the header. */}
+      <header className="sticky top-0 z-40 flex h-[var(--topbar-h)] shrink-0 items-center gap-3 bg-bg md:grid md:grid-cols-[minmax(max-content,1fr)_minmax(200px,min(520px,calc(100vw-920px)))_minmax(max-content,1fr)] md:gap-6">
+        {/* Logo cell lines up with the sidebar; the only divider line sits under the logo. */}
+        <div className="flex h-full shrink-0 items-center gap-3 pl-4 md:w-[var(--sidebar-w)] md:justify-self-start md:border-b md:border-border md:px-6">
+          <button className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-surface md:hidden" onClick={() => setMobileNav((v) => !v)} aria-label="Menu">
+            <span className="block h-0.5 w-5 bg-text shadow-[0_-6px_0_#fcfcfc,0_6px_0_#fcfcfc]" />
+          </button>
+          <Link href="/dashboard" aria-label="Nest home" className="shrink-0">
+            <NestLogo priority className="h-10 md:h-14" />
+          </Link>
+        </div>
         <form
-          className="mx-auto hidden w-full max-w-[620px] items-center gap-3 rounded-full bg-surface px-5 md:flex"
+          className="hidden w-full items-center gap-3 rounded-full bg-surface px-5 md:flex"
           onSubmit={(e) => {
             e.preventDefault();
             router.push(`/search?q=${encodeURIComponent(q)}`);
           }}
         >
-          <IconSearch size={18} className="text-text" />
+          <IconSearch size={18} className="shrink-0 text-text" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search by Name, Date"
-            className="h-12 flex-1 bg-transparent text-sm text-text placeholder:text-dim"
+            className="h-12 min-w-0 flex-1 bg-transparent text-sm text-text placeholder:text-dim"
           />
         </form>
-        <div className="ml-auto flex items-center gap-3 md:gap-5">
+        <div className="ml-auto flex items-center justify-end gap-2 pr-4 sm:gap-3 md:ml-0 md:justify-self-end md:pr-8 xl:gap-5">
           <div ref={locRef} className="relative">
             <button
               type="button"
               onClick={() => setLocOpen((v) => !v)}
-              className="hidden h-11 items-center gap-2 rounded-full bg-surface px-5 text-sm font-semibold text-text md:flex"
+              className="hidden h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm font-semibold text-text lg:flex xl:px-5"
             >
-              <span className="max-w-[160px] truncate">{currentLocation || "Select Location"}</span>
+              <span className="max-w-[110px] truncate xl:max-w-[160px]">{currentLocation || "Select Location"}</span>
               <IconChevronDown size={16} />
             </button>
             {locOpen && (
-              <div className="absolute right-0 top-[calc(100%+8px)] w-[380px] rounded-[24px] border border-border bg-[#141414] p-4 shadow-2xl">
+              <div className="absolute right-0 top-[calc(100%+8px)] w-[min(380px,calc(100vw-32px))] rounded-[24px] border border-border bg-[#141414] p-4 shadow-2xl">
                 <p className="mb-3 text-sm font-medium text-text">Your location</p>
                 <LocationInput
                   value={currentLocation ? { address: currentLocation } : null}
@@ -185,7 +188,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               )}
             </button>
             {notifOpen && (
-              <div className="absolute right-0 top-[calc(100%+8px)] w-[340px] rounded-[24px] border border-border bg-[#141414] p-3 shadow-2xl">
+              <div className="absolute -right-12 top-[calc(100%+8px)] w-[min(340px,calc(100vw-32px))] rounded-[24px] border border-border bg-[#141414] p-3 shadow-2xl sm:right-0">
                 <p className="px-2 pb-2 text-sm font-semibold text-text">Notifications</p>
                 {notifications.map((n) => (
                   <div key={n.id} className="rounded-[14px] px-3 py-2.5 text-sm text-muted hover:bg-surface">
@@ -198,7 +201,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div ref={userRef} className="relative">
             <button type="button" onClick={() => setUserOpen((v) => !v)} className="flex items-center gap-2">
               <Avatar src={user.avatar} size={40} alt={user.firstName} />
-              <span className="hidden text-sm text-text md:block">
+              <span className="hidden max-w-[140px] truncate text-sm text-text xl:block">
                 {user.firstName} {user.lastName}
               </span>
               <IconChevronDown size={16} className="hidden text-text md:block" />
@@ -211,6 +214,17 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Link href="/settings" className="block rounded-[12px] px-3 py-2.5 text-sm text-text hover:bg-surface">
                   Settings
                 </Link>
+                {/* the location pill is hidden in the header below lg — reachable from here instead */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserOpen(false);
+                    setLocOpen(true);
+                  }}
+                  className="block w-full truncate rounded-[12px] px-3 py-2.5 text-left text-sm text-text hover:bg-surface lg:hidden"
+                >
+                  {currentLocation ? `Location: ${currentLocation}` : "Select Location"}
+                </button>
                 <Link href="/auth/role" className="block rounded-[12px] px-3 py-2.5 text-sm text-text hover:bg-surface">
                   Switch role ({role})
                 </Link>

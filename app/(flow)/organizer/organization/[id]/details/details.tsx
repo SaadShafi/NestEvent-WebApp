@@ -45,33 +45,44 @@ export function OrganizationDetails({ id }: { id: string }) {
           <Image src={cover} alt="" fill sizes="900px" className="object-cover" unoptimized={cover.startsWith("/uploads")} />
         </div>
 
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <span className="rounded-full border border-dashed border-[#5a5a5a] p-1">
-              <Avatar src={org.logo} size={100} alt={org.name} />
-            </span>
-            <div className="flex flex-col gap-0.5">
-              <span className="inline-flex items-center gap-2 font-display text-[28px] font-bold text-text">
-                {org.name}
-                {org.verified !== false && <IconVerified size={22} className="text-accent" />}
-              </span>
-              <span className="text-[15px] text-muted">{org.type}</span>
-              {locationText && (
-                <span className="inline-flex items-center gap-1 text-[15px] text-text">
-                  <IconPin size={16} className="text-accent" />
-                  {locationText}
+        {/* Figma: Edit Profile belongs to the name / type / location block — right edge, bottom-aligned with the location line */}
+        <div className="flex items-center gap-4">
+          <span className="shrink-0 rounded-full border border-dashed border-[#5a5a5a] p-1">
+            <Avatar src={org.logo} size={84} alt={org.name} className="sm:!h-[100px] sm:!w-[100px]" />
+          </span>
+          {/* Button stays on the right of the name/address column whenever that column is wide enough (container
+              query, not viewport — the column is narrow on tablets); long addresses wrap inside their own column. */}
+          <div className="@container min-w-0 flex-1">
+            <div className="flex flex-col gap-3 @min-[480px]:flex-row @min-[480px]:items-end @min-[480px]:justify-between @min-[480px]:gap-6">
+              <div className="flex min-w-0 flex-col gap-0.5 @min-[480px]:flex-1">
+                <span className="inline-flex flex-wrap items-center gap-2 break-words font-display text-[24px] font-bold text-text sm:text-[28px]">
+                  {org.name}
+                  {org.verified !== false && <IconVerified size={22} className="text-accent" />}
                 </span>
-              )}
+                <span className="text-[15px] text-muted">{org.type}</span>
+                {locationText && (
+                  <span className="flex items-start gap-1 text-[15px] text-text" title={locationText}>
+                    <IconPin size={16} className="mt-[3px] shrink-0 text-accent" />
+                    <span className="line-clamp-2 min-w-0">{locationText}</span>
+                  </span>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                href="/organizer/organization/new"
+                icon={<IconEdit size={16} />}
+                className="h-9! shrink-0 self-start px-4! text-[15px]! font-medium! @min-[480px]:self-auto"
+              >
+                Edit Profile
+              </Button>
             </div>
           </div>
-          <Button variant="white" size="sm" href="/organizer/organization/new" icon={<IconEdit size={15} />}>
-            Edit Profile
-          </Button>
         </div>
 
         {org.description && <p className="max-w-[560px] text-[15px] leading-relaxed text-text">{org.description}</p>}
 
-        <div className="flex flex-col gap-4">
+        <div className="flex max-w-[545px] flex-col gap-5">
           <h3 className="text-[20px] font-semibold text-text">Team List</h3>
           {team.length === 0 ? (
             <p className="rounded-[24px] bg-surface-2 px-5 py-5 text-sm text-dim">No team members added yet.</p>
@@ -90,7 +101,7 @@ export function OrganizationDetails({ id }: { id: string }) {
           )}
         </div>
 
-        <Button variant="white" block className="mt-2 max-w-[560px]" onClick={() => router.push("/organizer/organization/success")}>
+        <Button variant="white" block className="mt-2 max-w-[545px]" onClick={() => router.push("/organizer/organization/success")}>
           Save & Continue
         </Button>
       </div>

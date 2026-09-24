@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 210" fill="none">
+  <!-- Support agent at a desk (stand-in for the Figma illustration; replace with the Figma export if available) -->
+  <defs>
+    <linearGradient id="sweater" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd23f"/>
+      <stop offset="1" stop-color="#f2b705"/>
+    </linearGradient>
+    <linearGradient id="desk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c9784a"/>
+      <stop offset="1" stop-color="#9c5532"/>
+    </linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6b3f24"/>
+      <stop offset="1" stop-color="#4a2a17"/>
+    </linearGradient>
+    <linearGradient id="laptop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e9edf2"/>
+      <stop offset="1" stop-color="#c3cad3"/>
+    </linearGradient>
+  </defs>
+
+  <!-- chat bubbles -->
+  <g>
+    <rect x="178" y="14" width="46" height="30" rx="8" fill="#fff"/>
+    <path d="M186 44l-4 8 11-8z" fill="#fff"/>
+    <path d="M184 27l4 4 7-8" stroke="#22c55e" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="199" y="22" width="18" height="3.2" rx="1.6" fill="#374151"/>
+    <rect x="199" y="29" width="18" height="3.2" rx="1.6" fill="#374151"/>
+    <rect x="186" y="36" width="31" height="3.2" rx="1.6" fill="#374151"/>
+    <rect x="160" y="56" width="42" height="26" rx="8" fill="#fff"/>
+    <path d="M166 82l-3 7 10-7z" fill="#fff"/>
+    <circle cx="172" cy="69" r="3.3" fill="#374151"/>
+    <circle cx="181" cy="69" r="3.3" fill="#374151"/>
+    <circle cx="190" cy="69" r="3.3" fill="#374151"/>
+  </g>
+
+  <!-- hair back -->
+  <path d="M99 44c0-19 12-31 31-31s31 12 31 31v34c0 6-5 10-10 10h-42c-5 0-10-4-10-10z" fill="url(#hair)"/>
+
+  <!-- body / sweater -->
+  <path d="M84 150c0-30 19-52 46-52s46 22 46 52v14H84z" fill="url(#sweater)"/>
+  <path d="M117 98l13 14 13-14" fill="#fff"/>
+  <path d="M117 98l13 14 13-14" stroke="#e5e7eb" stroke-width="1.5"/>
+  <path d="M124 98h12v6l-6 6-6-6z" fill="#e8b48f"/>
+
+  <!-- head -->
+  <ellipse cx="130" cy="58" rx="24" ry="28" fill="#f2c4a0"/>
+  <ellipse cx="106" cy="62" rx="4" ry="6" fill="#e8b48f"/>
+  <ellipse cx="154" cy="62" rx="4" ry="6" fill="#e8b48f"/>
+  <!-- fringe -->
+  <path d="M105 50c2-17 13-26 25-26s23 9 25 26c-9-2-18-8-23-16-4 8-15 14-27 16z" fill="url(#hair)"/>
+  <!-- face -->
+  <ellipse cx="121" cy="60" rx="2.6" ry="3.2" fill="#2b1b12"/>
+  <ellipse cx="139" cy="60" rx="2.6" ry="3.2" fill="#2b1b12"/>
+  <path d="M117 53.5q4-2.5 8 0M135 53.5q4-2.5 8 0" stroke="#4a2a17" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M123 72q7 6 14 0" stroke="#b5533c" stroke-width="2.2" stroke-linecap="round"/>
+  <ellipse cx="115" cy="68" rx="4" ry="2.4" fill="#f59e8b" opacity=".45"/>
+  <ellipse cx="145" cy="68" rx="4" ry="2.4" fill="#f59e8b" opacity=".45"/>
+
+  <!-- headset -->
+  <path d="M104 58c0-18 12-31 26-31s26 13 26 31" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>
+  <rect x="99" y="54" width="10" height="16" rx="4" fill="#1f2937"/>
+  <rect x="151" y="54" width="10" height="16" rx="4" fill="#1f2937"/>
+  <path d="M104 70c0 9 6 13 14 13" stroke="#1f2937" stroke-width="2.6" stroke-linecap="round"/>
+  <circle cx="120" cy="83" r="3.2" fill="#1f2937"/>
+
+  <!-- arms resting on desk -->
+  <path d="M92 132c-6 10-8 20-6 26h26l8-14z" fill="#f2b705"/>
+  <path d="M168 132c6 10 8 20 6 26h-26l-8-14z" fill="#f2b705"/>
+
+  <!-- laptop -->
+  <path d="M96 116h68a4 4 0 0 1 4 4v38H92v-38a4 4 0 0 1 4-4z" fill="url(#laptop)"/>
+  <circle cx="130" cy="136" r="4" fill="#9aa3ad"/>
+  <path d="M84 158h92l-4 6H88z" fill="#d7dde4"/>
+
+  <!-- plant -->
+  <path d="M60 146c-2-10 2-18 8-22 1 8-2 16-8 22z" fill="#4caf50"/>
+  <path d="M60 146c4-9 11-13 16-12-3 7-9 11-16 12z" fill="#66bb6a"/>
+  <path d="M60 146c-5-6-12-8-16-6 3 5 9 8 16 6z" fill="#43a047"/>
+  <path d="M52 146h16l-2 18H54z" fill="#f5f5f4"/>
+
+  <!-- mug -->
+  <rect x="190" y="146" width="16" height="18" rx="3" fill="#f5f5f4"/>
+  <path d="M206 150c6 0 6 10 0 10" stroke="#f5f5f4" stroke-width="3" fill="none"/>
+  <path d="M195 140q2-4 0-8M201 140q2-4 0-8" stroke="#d6d3d1" stroke-width="1.6" stroke-linecap="round"/>
+
+  <!-- desk -->
+  <rect x="36" y="164" width="188" height="10" rx="2" fill="url(#desk)"/>
+  <rect x="46" y="174" width="168" height="30" fill="#8a4a2b"/>
+  <path d="M46 186h168" stroke="#7a3f22" stroke-width="1.5"/>
+</svg>

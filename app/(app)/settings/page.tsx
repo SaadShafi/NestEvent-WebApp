@@ -1,20 +1,26 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { Field, Input, PasswordInput, Textarea } from "@/components/ui/form";
-import { IconDoc, IconLock, IconMessage, IconTeam, IconTrash } from "@/components/ui/icons";
+import { Field, PasswordInput } from "@/components/ui/form";
+import { IconCard, IconChevronDown, IconDoc, IconLock, IconMail, IconMessage, IconTeam, IconTrash, IconWallet } from "@/components/ui/icons";
 import { Modal, PageTitle } from "@/components/ui/primitives";
 import { useToast } from "@/components/ui/toast";
 import { useNest } from "@/lib/store";
+import { BankAccountsPanel, WalletPanel } from "./_components/wallet-panels";
 import { cn, strongPassword } from "@/lib/utils";
 
-type Tab = "password" | "terms" | "privacy" | "faq" | "support" | "delete";
+type Tab = "password" | "terms" | "bank" | "wallet" | "privacy" | "faq" | "support" | "delete";
+const TAB_VALUES: Tab[] = ["password", "terms", "bank", "wallet", "privacy", "faq", "support", "delete"];
 
-const ITEMS: { value: Tab; label: string; icon: ReactNode }[] = [
+// Figma order; Bank Accounts + Wallet are organizer-only panels.
+const ITEMS: { value: Tab; label: string; icon: ReactNode; organizer?: boolean }[] = [
   { value: "password", label: "Change Password", icon: <IconLock size={16} /> },
   { value: "terms", label: "Terms & Conditions", icon: <IconDoc size={16} /> },
+  { value: "bank", label: "Bank Accounts", icon: <IconCard size={16} />, organizer: true },
+  { value: "wallet", label: "Wallet", icon: <IconWallet size={16} />, organizer: true },
   { value: "privacy", label: "Privacy Policy", icon: <IconDoc size={16} /> },
   { value: "faq", label: "FAQ", icon: <IconDoc size={16} /> },
   { value: "support", label: "Support", icon: <IconMessage size={16} /> },
@@ -22,6 +28,8 @@ const ITEMS: { value: Tab; label: string; icon: ReactNode }[] = [
 
 const LOREM =
   "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.";
+
+const SUPPORT_EMAIL = "Support@starmagic.com";
 
 const FAQS = [
   { q: "How do I buy a ticket?", a: "Open any event, tap Buy Ticket, choose your ticket type and quantity, then complete checkout. Your QR ticket appears under My Tickets." },
@@ -43,19 +51,16 @@ function Settings() {
   const params = useSearchParams();
   const router = useRouter();
   const raw = params.get("tab") as Tab | null;
-  const tab: Tab = raw && ["password", "terms", "privacy", "faq", "support", "delete"].includes(raw) ? raw : "password";
+  const role = useNest((s) => s.role);
+  const allowed = (t: Tab) => TAB_VALUES.includes(t) && (role === "organizer" || (t !== "bank" && t !== "wallet"));
+  const tab: Tab = raw && allowed(raw) ? raw : "password";
   const setTab = (t: Tab) => router.replace(`/settings?tab=${t}`);
 
-  const role = useNest((s) => s.role);
   const setRole = useNest((s) => s.setRole);
   const updateUser = useNest((s) => s.updateUser);
   const toast = useToast();
 
   const becomeOrganizer = () => {
-    if (role === "organizer") {
-      router.push("/organizer/events");
-      return;
-    }
     setRole("organizer");
     updateUser({ role: "organizer" });
     toast("Organizer mode enabled", "success");
@@ -63,13 +68,13 @@ function Settings() {
   };
 
   return (
-    <div className="mx-auto max-w-[1100px]">
+    <div className="max-w-[1040px]">
       <PageTitle>Setting</PageTitle>
       <p className="mt-1 text-sm text-muted">Monitor Complaints and Search for User Issues</p>
 
-      <div className="mt-6 grid gap-5 rounded-[28px] bg-surface-2 p-5 md:grid-cols-[300px_1fr]">
+      <div className="mt-6 grid grid-cols-1 gap-5 rounded-[28px] bg-surface-2 p-4 sm:p-5 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
         <div className="flex flex-col gap-3">
-          {ITEMS.map((it) => {
+          {ITEMS.filter((it) => !it.organizer || role === "organizer").map((it) => {
             const active = tab === it.value;
             return (
               <button
@@ -77,7 +82,7 @@ function Settings() {
                 type="button"
                 onClick={() => setTab(it.value)}
                 className={cn(
-                  "flex h-12 items-center gap-3 rounded-[14px] px-4 text-[13px] font-medium transition",
+                  "flex h-[62px] items-center gap-3 rounded-[14px] px-6 text-[14px] font-medium transition",
                   active ? "bg-accent-gradient text-white shadow-[0_8px_24px_rgba(255,106,0,0.25)]" : "bg-[#141414] text-text hover:bg-surface",
                 )}
               >
@@ -90,44 +95,38 @@ function Settings() {
             type="button"
             onClick={() => setTab("delete")}
             className={cn(
-              "flex h-12 items-center gap-3 rounded-[14px] px-4 text-[13px] font-medium transition",
+              "flex h-[62px] items-center gap-3 rounded-[14px] px-6 text-[14px] font-medium transition",
               tab === "delete" ? "bg-[#3a1616] text-danger ring-1 ring-danger/40" : "bg-[#221313] text-danger hover:bg-[#2c1616]",
             )}
           >
             <IconTrash size={16} /> Delete Account
           </button>
 
-          <button
-            type="button"
-            onClick={becomeOrganizer}
-            className="relative mt-2 flex items-center gap-4 overflow-hidden rounded-[16px] border border-accent/40 bg-gradient-to-br from-[#1b1b1b] to-[#0d0d0d] p-4 text-left transition hover:border-accent/70"
-          >
-            <span className="pointer-events-none absolute -left-6 -top-6 h-28 w-28 rounded-full bg-accent/25 blur-2xl" />
-            <span className="relative grid h-[76px] w-[76px] shrink-0 place-items-center rounded-full bg-[#111] text-accent shadow-[0_0_30px_rgba(255,106,0,0.35)] ring-1 ring-accent/40">
-              <IconTeam size={38} />
-            </span>
-            <span className="relative">
-              <span className="block text-[18px] font-semibold text-text">
-                {role === "organizer" ? (
-                  <>
-                    Organizer <span className="text-accent">mode active</span>
-                  </>
-                ) : (
-                  <>
-                    Become <span className="text-accent">Organizer</span>
-                  </>
-                )}
+          {role !== "organizer" && (
+            <button
+              type="button"
+              onClick={becomeOrganizer}
+              className="relative mt-2 flex items-center gap-4 overflow-hidden rounded-[16px] border border-accent/40 bg-gradient-to-br from-[#1b1b1b] to-[#0d0d0d] p-4 text-left transition hover:border-accent/70"
+            >
+              <span className="pointer-events-none absolute -left-6 -top-6 h-28 w-28 rounded-full bg-accent/25 blur-2xl" />
+              <span className="relative grid h-[76px] w-[76px] shrink-0 place-items-center rounded-full bg-[#111] text-accent shadow-[0_0_30px_rgba(255,106,0,0.35)] ring-1 ring-accent/40">
+                <IconTeam size={38} />
               </span>
-              <span className="mt-1 block text-[11px] leading-snug text-muted">
-                {role === "organizer" ? "Manage your events and guests." : "Create events, manage guests, and grow your audience."}
+              <span className="relative">
+                <span className="block text-[18px] font-semibold text-text">
+                  Become <span className="text-accent">Organizer</span>
+                </span>
+                <span className="mt-1 block text-[11px] leading-snug text-muted">Create events, manage guests, and grow your audience.</span>
               </span>
-            </span>
-          </button>
+            </button>
+          )}
         </div>
 
-        <div className="rounded-[24px] bg-[#141414] p-6">
+        <div className="min-w-0 self-start rounded-[32px] bg-surface p-4 sm:p-6">
           {tab === "password" && <ChangePassword />}
           {tab === "terms" && <TextPanel title="Terms and Conditions" />}
+          {tab === "bank" && <BankAccountsPanel />}
+          {tab === "wallet" && <WalletPanel />}
           {tab === "privacy" && <TextPanel title="Privacy Policy" />}
           {tab === "faq" && <FaqPanel />}
           {tab === "support" && <SupportPanel />}
@@ -209,9 +208,14 @@ function FaqPanel() {
           const isOpen = open === i;
           return (
             <div key={f.q} className="rounded-[14px] bg-[#0d0d0d]">
-              <button type="button" onClick={() => setOpen(isOpen ? null : i)} className="flex w-full items-center justify-between px-4 py-3 text-left text-[13px] font-medium text-text">
+              <button
+                type="button"
+                onClick={() => setOpen(isOpen ? null : i)}
+                aria-expanded={isOpen}
+                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-[13px] font-medium text-text"
+              >
                 {f.q}
-                <span className={cn("text-accent transition", isOpen && "rotate-45")}>+</span>
+                <IconChevronDown size={18} className={cn("shrink-0 text-white transition-transform duration-200", isOpen && "rotate-180")} />
               </button>
               {isOpen && <p className="px-4 pb-4 text-[12px] leading-relaxed text-muted">{f.a}</p>}
             </div>
@@ -222,33 +226,32 @@ function FaqPanel() {
   );
 }
 
+/** Support (Figma): support-agent illustration, "Need more help?" and the Email Support row. */
 function SupportPanel() {
-  const toast = useToast();
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
-  const send = () => {
-    if (!subject.trim() || !message.trim()) {
-      toast("Please fill in subject and message", "error");
-      return;
-    }
-    toast("Message sent — our team will reply by email", "success");
-    setSubject("");
-    setMessage("");
-  };
   return (
-    <div className="mx-auto max-w-[420px]">
+    <div>
       <PanelTitle>Support</PanelTitle>
-      <div className="flex flex-col gap-5">
-        <Field label="Subject">
-          <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="What do you need help with?" className="bg-[#0d0d0d]" />
-        </Field>
-        <Field label="Message">
-          <Textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Describe the issue" max={1000} className="bg-[#0d0d0d]" />
-        </Field>
-        <Button variant="white" block onClick={send}>
-          Send
-        </Button>
-      </div>
+      <Image
+        src="/images/support-illustration.svg"
+        alt="Support agent"
+        width={260}
+        height={210}
+        className="mx-auto h-auto w-[220px] sm:w-[260px]"
+      />
+      <h3 className="mt-5 text-center text-[24px] font-bold text-text sm:text-[26px]">Need more help?</h3>
+      <p className="mx-auto mt-2 max-w-[290px] text-center text-[14px] leading-relaxed text-text/90">
+        Our dedicated team is ready to connect and support you anytime.
+      </p>
+      <a
+        href={`mailto:${SUPPORT_EMAIL}`}
+        className="mt-8 flex items-center gap-3.5 rounded-[16px] bg-[#0d0d0d] px-5 py-3.5 transition hover:bg-[#151515]"
+      >
+        <IconMail size={30} className="shrink-0 text-accent" />
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="text-[14px] font-semibold text-text">Email Support</span>
+          <span className="truncate text-xs text-text/90">{SUPPORT_EMAIL}</span>
+        </span>
+      </a>
     </div>
   );
 }

@@ -10,7 +10,7 @@ export default function Home() {
   useEffect(() => {
     if (!hydrated) return;
     if (!user) router.replace("/auth/role");
-    else if (!onboarded) router.replace("/onboarding/profile");
+    else if (!onboarded) router.replace("/onboarding/interests");
     else router.replace("/dashboard");
   }, [hydrated, user, onboarded, router]);
   return <div className="grid min-h-screen place-items-center text-dim">Loading…</div>;
